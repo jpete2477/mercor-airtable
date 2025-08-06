@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Job Application Form - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Job Application Form
+                </h4>
+            </div>
+            <div class="card-body">
+                <div id="alert-container"></div>
+                
+                <form id="applicationForm">
+                    <!-- Personal Details -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="full_name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" placeholder="City, Country">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="linkedin" class="form-label">LinkedIn Profile</label>
+                                <input type="url" class="form-control" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Experience -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-briefcase me-2"></i>Work Experience
+                        </h5>
+                        <div id="work-experience-container">
+                            <div class="work-experience-item border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Company *</label>
+                                        <input type="text" class="form-control" name="company" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Job Title *</label>
+                                        <input type="text" class="form-control" name="title" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="month" class="form-control" name="start">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">End Date</label>
+                                        <input type="month" class="form-control" name="end" placeholder="Leave empty if current">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Technologies Used</label>
+                                    <input type="text" class="form-control" name="technologies" placeholder="JavaScript, Python, React, etc.">
+                                    <div class="form-text">Separate technologies with commas</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-experience" style="display: none;">
+                                    <i class="fas fa-trash me-1"></i>Remove
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-experience" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i>Add Another Experience
+                        </button>
+                    </div>
+
+                    <!-- Salary Preferences -->
+                    <div class="mb-4">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-dollar-sign me-2"></i>Salary Preferences
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="preferred_rate" class="form-label">Preferred Rate ($/hour)</label>
+                                <input type="number" class="form-control" id="preferred_rate" name="preferred_rate" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="min_rate" class="form-label">Minimum Rate ($/hour)</label>
+                                <input type="number" class="form-control" id="min_rate" name="min_rate" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select class="form-select" id="currency" name="currency">
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="CAD">CAD</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="availability" class="form-label">Availability (hours/week)</label>
+                            <input type="number" class="form-control" id="availability" name="availability" min="1" max="60" value="40">
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let experienceCount = 1;
+
+    // Add new work experience
+    $('#add-experience').click(function() {
+        experienceCount++;
+        const newExperience = $('.work-experience-item').first().clone();
+        
+        // Clear all inputs
+        newExperience.find('input').val('');
+        newExperience.find('.remove-experience').show();
+        
+        $('#work-experience-container').append(newExperience);
+        updateRemoveButtons();
+    });
+
+    // Remove work experience
+    $(document).on('click', '.remove-experience', function() {
+        $(this).closest('.work-experience-item').remove();
+        experienceCount--;
+        updateRemoveButtons();
+    });
+
+    function updateRemoveButtons() {
+        const items = $('.work-experience-item');
+        if (items.length > 1) {
+            items.find('.remove-experience').show();
+        } else {
+            items.find('.remove-experience').hide();
+        }
+    }
+
+    // Form submission
+    $('#applicationForm').submit(function(e) {
+        e.preventDefault();
+        
+        const submitBtn = $('#submitBtn');
+        const originalText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
+        
+        // Collect form data
+        const formData = {
+            full_name: $('#full_name').val(),
+            email: $('#email').val(),
+            location: $('#location').val(),
+            linkedin: $('#linkedin').val(),
+            preferred_rate: parseFloat($('#preferred_rate').val()) || 0,
+            min_rate: parseFloat($('#min_rate').val()) || 0,
+            currency: $('#currency').val(),
+            availability: parseInt($('#availability').val()) || 40,
+            work_experience: []
+        };
+
+        // Collect work experience
+        $('.work-experience-item').each(function() {
+            const exp = {
+                company: $(this).find('input[name="company"]').val(),
+                title: $(this).find('input[name="title"]').val(),
+                start: $(this).find('input[name="start"]').val(),
+                end: $(this).find('input[name="end"]').val(),
+                technologies: $(this).find('input[name="technologies"]').val().split(',').map(t => t.trim()).filter(t => t)
+            };
+            
+            if (exp.company && exp.title) {
+                formData.work_experience.push(exp);
+            }
+        });
+
+        // Submit form
+        $.ajax({
+            url: '/api/submit-application',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                showAlert('success', 'Application submitted successfully! We will review your application and get back to you soon.');
+                $('#applicationForm')[0].reset();
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
+                showAlert('danger', 'Error: ' + error);
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    function showAlert(type, message) {
+        const alert = $(`
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `);
+        
+        $('#alert-container').html(alert);
+        
+        // Auto-dismiss success alerts after 5 seconds
+        if (type === 'success') {
+            setTimeout(() => alert.alert('close'), 5000);
+        }
+    }
+});
+</script>
+{% endblock %}

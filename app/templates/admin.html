@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+    </h2>
+    <button class="btn btn-outline-primary" onclick="refreshData()">
+        <i class="fas fa-sync-alt me-1"></i>Refresh
+    </button>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-users me-2"></i>Shortlisted Candidates
+                </h5>
+                <h3 class="text-primary" id="totalCandidates">{{ leads|length if leads else 0 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">
+                    <i class="fas fa-star me-2"></i>Average Score
+                </h5>
+                <h3 class="text-success" id="avgScore">
+                    {% if leads %}
+                        {% set scores = [] %}
+                        {% for lead in leads %}
+                            {% if lead.fields.get('Score') and lead.fields.get('Score') > 0 %}
+                                {{ scores.append(lead.fields.get('Score', 0)) or '' }}
+                            {% endif %}
+                        {% endfor %}
+                        {% if scores %}
+                            {{ "%.1f"|format(scores|sum / scores|length) }}
+                        {% else %}
+                            0.0
+                        {% endif %}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">
+                    <i class="fas fa-clock me-2"></i>Latest Application
+                </h5>
+                <p class="text-info mb-0" id="latestApp">
+                    {% if leads %}
+                        {{ leads[0].fields.get('Created At', 'Unknown')[:10] if leads else 'None' }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>Shortlisted Candidates
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if leads %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Score</th>
+                        <th>Applicant</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary fs-6">{{ lead.fields.get('Score', 0) }}</span>
+                        </td>
+                        <td>
+                            <strong>Applicant ID:</strong> 
+                            {% if lead.fields.get('Applicant') %}
+                                {{ lead.fields.Applicant[0] }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                        <td>{{ lead.fields.get('Created At', 'Unknown')[:19].replace('T', ' ') if lead.fields.get('Created At') else 'Unknown' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('{{ lead.id }}')">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>
+                            {% if lead.fields.get('Applicant') %}
+                            <button class="btn btn-sm btn-outline-info" onclick="decompressData('{{ lead.fields.Applicant[0] }}')">
+                                <i class="fas fa-database me-1"></i>Decompress
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No shortlisted candidates yet</h5>
+            <p class="text-muted">Candidates who meet the shortlisting criteria will appear here.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Candidate Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshData() {
+    location.reload();
+}
+
+function viewDetails(leadId) {
+    $('#modalContent').html('<div class="text-center"><div class="spinner-border" role="status"></div></div>');
+    $('#detailsModal').modal('show');
+    
+    // In a real implementation, you would fetch detailed candidate information
+    // For now, we'll show a placeholder
+    setTimeout(() => {
+        $('#modalContent').html(`
+            <div class="alert alert-info">
+                <h6>Lead ID: ${leadId}</h6>
+                <p>Detailed candidate information would be displayed here, including:</p>
+                <ul>
+                    <li>Personal details</li>
+                    <li>Work experience</li>
+                    <li>LLM evaluation summary</li>
+                    <li>Shortlisting score breakdown</li>
+                </ul>
+                <p><em>This would be implemented by fetching and decompressing the candidate's JSON data.</em></p>
+            </div>
+        `);
+    }, 500);
+}
+
+function decompressData(applicantId) {
+    if (!confirm('This will decompress and restore the candidate data. Continue?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/decompress-applicant/${applicantId}`,
+        method: 'POST',
+        success: function(response) {
+            if (response.success) {
+                alert('Data decompressed successfully!');
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
+            alert('Error: ' + error);
+        }
+    });
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshData, 30000);
+</script>
+{% endblock %}
