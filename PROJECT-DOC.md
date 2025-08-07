@@ -4,6 +4,9 @@
 
 This is a comprehensive applicant tracking system built with Flask, Airtable, and AI integration. The system automates the entire candidate evaluation process from application submission to shortlisting, featuring JSON compression, LLM-powered candidate evaluation, and a responsive admin dashboard.
 
+## Github Repo
+https://github.com/jpete2477/mercor-airtable
+
 ## Features
 
 ### Core Functionality

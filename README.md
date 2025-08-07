@@ -1,6 +1,27 @@
-# Applicant Tracking System
+# Airtable-based Applicant Tracking System
 
-A modern, containerized applicant tracking system built with Flask, Airtable, and LLM integration. Features automatic JSON compression, intelligent candidate evaluation, and configurable shortlisting rules.
+A modern, containerized applicant tracking system built with Flask, Airtable, and AI integration. Features automatic JSON compression, intelligent candidate evaluation, and a responsive admin dashboard.
+
+## 🔗 Repository
+**GitHub**: https://github.com/jpete2477/mercor-airtable
+
+📋 **Full Documentation**: See [PROJECT-DOC.md](PROJECT-DOC.md) for comprehensive technical documentation.
+
+## ✨ Key Highlights
+
+- **🎯 Production Ready**: Fully containerized with Docker, includes health checks and error handling
+- **🤖 AI-Powered**: Integrates OpenAI/Anthropic for intelligent candidate evaluation
+- **📊 Real-time Dashboard**: Beautiful admin interface with live statistics and candidate management
+- **🗜️ Smart Compression**: Advanced JSON compression with hash-based change detection
+- **⚡ High Performance**: Redis caching, rate limiting, and optimized database queries
+- **🔧 Developer Friendly**: Hot reloading, comprehensive tests, detailed documentation
+
+## 🎥 Quick Demo
+
+1. **Application Form**: Candidates submit applications through a clean, responsive form
+2. **Automatic Processing**: Data is compressed, stored in Airtable, and evaluated by AI
+3. **Admin Dashboard**: Real-time view of all candidates with scores, statistics, and management tools
+4. **API Integration**: Full REST API for programmatic access and integrations
 
 ## 🚀 Features
 
@@ -41,8 +62,8 @@ A modern, containerized applicant tracking system built with Flask, Airtable, an
 ### 1. Clone and Configure
 
 ```bash
-git clone <repository-url>
-cd Mercor-Airtable
+git clone https://github.com/jpete2477/mercor-airtable.git
+cd mercor-airtable
 cp .env.example .env
 ```
 
@@ -64,64 +85,32 @@ LLM_MODEL=gpt-4o-mini
 
 ### 3. Set Up Airtable Schema
 
-Create an Airtable base with these tables:
+Create an Airtable base with these tables (see [AIRTABLE_SETUP.md](AIRTABLE_SETUP.md) for detailed setup):
 
-#### Applicants
-- `Applicant ID` (AutoNumber)
-- `Compressed JSON` (Long Text) 
-- `LLM Summary` (Long Text)
-- `LLM Score` (Number)
-- `Status` (Single Select: Pending, Processed, Error)
-- `Last Hash` (Long Text)
+#### Applicants *(Required)*
+- `Name` (Single line text) - Primary field
+- `Status` (Single select: Pending, Processed)
+- `Compressed JSON` (Long text) - Stores compressed applicant data
+- `Last Hash` (Single line text) - For change detection
+- `LLM Summary` (Long text) - AI evaluation summary
+- `LLM Score` (Number) - AI-generated score
 
-#### Personal Details  
-- `Full Name` (Single Line Text, required)
-- `Email` (Email)
-- `Location` (Single Line Text)
-- `LinkedIn` (URL)
-- `Applicant ID` (Link to Applicants)
+#### Personal Details *(Required)*
+- `Applicant Record` (Link to Applicants)
+- `Full Name` (Single line text)
+- `Email Address` (Email) 
+- `City Location` (Single line text)
+- `LinkedIn Profile` (URL)
 
-#### Work Experience
-- `Company` (Single Line Text)
-- `Title` (Single Line Text)  
-- `Start` (Date)
-- `End` (Date)
-- `Technologies` (Multiple Select)
-- `Applicant ID` (Link to Applicants)
+#### Additional Tables *(Optional - for full functionality)*
+- **Work Experience** - Job history details
+- **Salary Preferences** - Compensation requirements  
+- **Shortlist Rules** - Configurable scoring criteria
+- **Shortlisted Leads** - Qualified candidates
 
-#### Salary Preferences
-- `Preferred Rate` (Number)
-- `Min Rate` (Number)
-- `Currency` (Single Select: USD, EUR, GBP, etc.)
-- `Availability` (Number)
-- `Applicant ID` (Link to Applicants)
+> **Note**: The current implementation works with just the Applicants and Personal Details tables. Additional tables can be added later for enhanced functionality.
 
-#### Shortlisted Leads
-- `Applicant` (Link to Applicants)
-- `Compressed JSON` (Long Text)
-- `Score` (Number)
-- `Score Reason` (Long Text) 
-- `Created At` (Date/Time)
-
-#### Shortlist Rules
-- `Criterion` (Single Line Text)
-- `Rule` (Single Line Text)
-- `Points` (Number)
-- `Active` (Checkbox)
-- `Description` (Long Text)
-
-### 4. Add Sample Shortlist Rules
-
-Add these records to your Shortlist Rules table:
-
-| Criterion | Rule | Points | Active | Description |
-|-----------|------|---------|--------|-------------|
-| experience | >=3 years | 1 | ✓ | At least 3 years experience |
-| compensation | <=$100/hr | 1 | ✓ | Rate under $100/hour |
-| location | US only | 1 | ✓ | Located in United States |
-| availability | >=35 hours | 1 | ✓ | Full-time availability |
-
-### 5. Launch Application
+### 4. Launch Application
 
 ```bash
 # Production mode
@@ -131,7 +120,7 @@ docker-compose up -d
 docker-compose up
 ```
 
-### 6. Access Application
+### 5. Access Application
 
 - **Application Form**: http://localhost:5000
 - **Admin Dashboard**: http://localhost:5000/admin  
@@ -143,13 +132,13 @@ Run the test suite:
 
 ```bash
 # Run all tests
-docker-compose -f docker-compose.test.yml up test-runner
+docker-compose exec app python -m pytest
 
-# Run tests in development
-docker-compose -f docker-compose.test.yml up app-test
+# Run tests with coverage
+docker-compose exec app python -m pytest --cov=app
 
 # Run specific test file
-docker-compose -f docker-compose.test.yml run app-test python -m pytest tests/test_compression.py -v
+docker-compose exec app python -m pytest tests/test_compression.py -v
 ```
 
 ## 📊 API Endpoints
@@ -238,37 +227,29 @@ python app/main.py
 ```
 mercor-airtable/
 ├── app/
-│   ├── main.py                 # Flask application
-│   ├── models/
-│   │   ├── airtable_client.py  # Airtable integration
-│   │   ├── compression.py      # JSON compression
-│   │   ├── llm_service.py      # LLM integration  
-│   │   └── shortlist_engine.py # Shortlisting logic
-│   ├── templates/              # HTML templates
-│   │   ├── base.html
-│   │   ├── index.html          # Application form
-│   │   └── admin.html          # Admin dashboard
-│   └── static/                 # Static assets
+│   ├── main.py                 # Flask application entry point
+│   ├── models/                 # Business logic components
+│   │   ├── airtable_client.py  # Airtable API integration
+│   │   ├── compression.py      # JSON compression utilities
+│   │   ├── llm_service.py      # AI evaluation service  
+│   │   └── shortlist_engine.py # Candidate ranking logic
+│   └── templates/              # Jinja2 HTML templates
+│       ├── base.html           # Base template with navbar
+│       ├── index.html          # Application form
+│       └── admin.html          # Admin dashboard
 ├── config/
-│   └── settings.py             # Configuration
-├── tests/                      # Test suite
-├── docker-compose.yml          # Production compose
-├── docker-compose.test.yml     # Test compose
-├── Dockerfile                  # Container definition
-└── requirements.txt            # Python dependencies
+│   └── settings.py             # Environment configuration
+├── tests/                      # Test suite with pytest
+│   ├── test_compression.py     # Compression tests
+│   └── test_shortlist_engine.py # Shortlisting tests
+├── docker-compose.yml          # Container orchestration
+├── Dockerfile                  # Application container
+├── requirements.txt            # Python dependencies
+├── PROJECT-DOC.md              # Comprehensive documentation
+└── AIRTABLE_SETUP.md          # Database setup guide
 ```
 
 ## 🚀 Production Deployment
-
-### With SSL/HTTPS
-
-1. Create SSL certificates in `./ssl/` directory
-2. Update `nginx.conf` with your domain
-3. Deploy with nginx:
-
-```bash
-docker-compose --profile production up -d
-```
 
 ### Environment Considerations
 
